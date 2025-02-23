@@ -56,7 +56,31 @@ def calculate_pay(hours, rate, tax_rate):
     net = gross - tax
     return gross, tax, net
 
-def process_employee_data(employee_data):
+def write_employee_data(from_date, to_date, empname, hours, rate, tax_rate):
+    with open("Employees.txt", "a") as file:
+        file.write(f"{from_date}|{to_date}|{empname}|{hours}|{rate}|{tax_rate}\n")
+
+
+def process_employee_data():
+
+    try:
+        with open("Employees.txt", "r") as file:
+            records = file.readlines()
+    except FileNotFoundError:
+        print("No employee records found.")
+        return
+    
+    while True:
+        filter_date = input("Enter start date for report (MM/DD/YYYY) or 'All' to view all records: ")
+        if filter_date.upper() == "ALL":
+            filter_date = "ALL"
+            break
+        try:
+            filter_date = datetime.strptime(filter_date, "%m/%d/%Y").strftime("%m/%d/%Y")
+            break
+        except ValueError:
+            print("Invalid date format. Please enter in MM/DD/YYYY format.")
+    
     totals = {
         'num_employees': 0,
         'total_hours': 0,
@@ -67,19 +91,21 @@ def process_employee_data(employee_data):
     
     print("\nEmployee Details:")
     print("-" * 60)
+
+    details_printed = False
     
-    for emp in employee_data:
-        from_date, to_date, name, hours, rate, tax_rate = emp
+    for record in records:
+        record = record.strip()
+        from_date, to_date, name, hours, rate, tax_rate = record.split("|")
+        hours, rate, tax_rate = float(hours), float(rate), float(tax_rate)
+
+        # Filter records based on date
+        if filter_date != "ALL" and from_date != filter_date:
+            continue
+
         gross, tax, net = calculate_pay(hours, rate, tax_rate)
-        
-        print(f"\nPay Period: {from_date} to {to_date}")
-        print(f"Employee name: {name}")
-        print(f"Hours worked: {hours}")
-        print(f"Hourly rate: ${rate:.2f}")
-        print(f"Gross pay: ${gross:.2f}")
-        print(f"Income tax rate: {tax_rate:.1%}")
-        print(f"Income tax: ${tax:.2f}")
-        print(f"Net pay: ${net:.2f}")
+    
+        print(from_date, to_date, name, f"{hours:,.2f}",  f"{rate:,.2f}", f"{gross:,.2f}",  f"{tax_rate:,.1%}",  f"{tax:,.2f}",  f"{net:,.2f}")
         
         # Update totals in dictionary
         totals['num_employees'] += 1
@@ -87,8 +113,13 @@ def process_employee_data(employee_data):
         totals['total_gross'] += gross
         totals['total_tax'] += tax
         totals['total_net'] += net
+        details_printed = True
+
+    if details_printed:
+        display_totals(totals)
+    else:
+        print("\nNo matching records found.")
     
-    return totals
 
 def display_totals(totals):
     print("\nPayroll Summary")
@@ -100,7 +131,6 @@ def display_totals(totals):
     print(f"Total net pay: ${totals['total_net']:.2f}")
 
 def main():
-    employee_data = []  # List to store employee information
     
     while True:
         empname = get_empname()
@@ -112,15 +142,11 @@ def main():
         rate = get_rate()
         tax_rate = get_tax_rate()
         
-        # Store employee data in list
-        employee_data.append([from_date, to_date, empname, hours, rate, tax_rate])
+        # Write employee data to file
+        write_employee_data(from_date, to_date, empname, hours, rate, tax_rate)
         
     # Process employee data and get totals
-    if employee_data:
-        totals = process_employee_data(employee_data)
-        display_totals(totals)
-    else:
-        print("Could not find any employees. I work better with actual data!")
+    process_employee_data()
 
 if __name__ == "__main__":
     main()
