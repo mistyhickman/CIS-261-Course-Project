@@ -118,7 +118,7 @@ def process_employee_data():
     if details_printed:
         display_totals(totals)
     else:
-        print("\nNo matching records found.")
+        print("\nNo detail information to print")
     
 
 def display_totals(totals):
