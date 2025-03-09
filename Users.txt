@@ -1,0 +1,2 @@
+imanadmin|peanut|ADMIN
+imauser|butter|USER
